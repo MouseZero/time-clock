@@ -39,9 +39,9 @@ def close_last_time_entry():
     # get the start time from the last time entry
     start_time = result[2]
     # get the current time
-    end_time = datetime.now().strftime('%H:%M')
+    end_time = datetime.now().strftime('%H:%M:%S')
     # get the duration in seconds
-    duration = datetime.strptime(end_time, '%H:%M') - datetime.strptime(start_time, '%H:%M')
+    duration = datetime.strptime(end_time, '%H:%M:%S') - datetime.strptime(start_time, '%H:%M:%S')
     # update the time entry
     c.execute("UPDATE time_entry SET end_time=?, duration=? WHERE id=?", (end_time, duration.total_seconds(), result[0]))
     conn.commit()
@@ -61,11 +61,20 @@ def create_time_entry():
     close_last_time_entry()
     # current date as 'date' variable
     date = datetime.now().strftime('%Y-%m-%d')
-    start_time = datetime.now().strftime('%H:%M')
+    start_time = datetime.now().strftime('%H:%M:%S')
     catagory = input('Enter the catagory of the time entry: ')
     description = input('Enter a description of the time entry: ')
     c.execute("INSERT INTO time_entry (date, start_time, catagory, description) VALUES (?, ?, ?, ?)", (date, start_time, catagory, description))
     conn.commit()
+
+def view_time_entries():
+    # get all time_entries today print id, catagory, start_time, duration
+    c.execute("SELECT id, catagory, start_time, duration FROM time_entry WHERE date=?", (datetime.now().strftime('%Y-%m-%d'),))
+    result = c.fetchall()
+    if result is None:
+        return
+    for row in result:
+        print(row)
 
 # input menu for user to select an option 1-4 create a new time entry, close time entry, view time entries, delete time entry
 def menu():
