@@ -179,5 +179,6 @@ def menu():
         return menu()
 
 setupDB()
-menu()
+while(True):
+    menu()
 conn.close()
