@@ -47,6 +47,7 @@ def close_last_time_entry():
 
 # function name delete_time_entry that deletes a time entry by id
 def delete_time_entry():
+    view_time_entries()
     # get the id of the time entry to delete
     id = input('Enter the id of the time entry to delete: ')
     # delete the time entry by id
@@ -109,12 +110,11 @@ def get_user_selection_of_catagory():
         print('An error occured, please enter a number 1-' + str(len(catagories)))
         return get_user_selection_of_catagory()
 
-# input menu for user to select an option 1-4 create a new time entry, close time entry, view time entries, delete time entry
 def menu():
     print('1. New time entry')
     print('2. Clock out')
     print('3. Print entries')
-    print('4. Delete a time entry')
+    print('4. Print Catagories')
     print('5. Exit')
     try:
         option = int(input('Enter an option: '))
@@ -128,11 +128,52 @@ def menu():
     elif option == 3:
         view_time_entries()
     elif option == 4:
-        delete_time_entry()
+        view_catagories()
     elif option == 5:
         sys.exit()
     else:
         print('An error occured, please enter a number 1-5')
+        return menu()
+
+def view_catagories():
+    print('For ' + datetime.now().strftime('%d/%m/%Y'))
+    # get all catagories print catagory, duration sum (in hours and minutes)) from todays time entries
+    c.execute("SELECT catagory, SUM(duration) FROM time_entry WHERE date=? GROUP BY catagory", (datetime.now().strftime('%Y-%m-%d'),))
+    result = c.fetchall()
+    if result is None:
+        return
+    # Print data as a table with lables id, catagory, start_time, duration using pandas
+    df = pd.DataFrame(result, columns=['catagory', 'duration'])
+    df['duration'] = df['duration'].apply(convert_seconds_to_hours_and_minutes)
+    print(df)
+
+# refactorer function with addition option 4 to Print Catagories
+def menu():
+    print('1. New time entry')
+    print('2. Clock out')
+    print('3. Print entries')
+    print('4. Print Catagories')
+    print('5. Delete a time entry')
+    print('6. Exit')
+    try:
+        option = int(input('Enter an option: '))
+    except ValueError:
+        print('An error occured, please enter a number 1-6')
+        return menu()
+    if option == 1:
+        create_time_entry()
+    elif option == 2:
+        close_last_time_entry()
+    elif option == 3:
+        view_time_entries()
+    elif option == 4:
+        view_catagories()
+    elif option == 5:
+        delete_time_entry()
+    elif option == 6:
+        sys.exit()
+    else:
+        print('An error occured, please enter a number 1-6')
         return menu()
 
 setupDB()
