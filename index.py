@@ -2,6 +2,7 @@ import sqlite3
 from datetime import datetime
 import sys
 import os
+import pandas as pd
 
 # create the database if it does not exist
 database = 'time_entries.db'
@@ -70,15 +71,15 @@ def view_time_entries():
     result = c.fetchall()
     if result is None:
         return
-    # Print data as a table with lables id, catagory, start_time, duration
-    print('id\tcatagory\tstart_time\tduration')
-    for row in result:
-        print(str(row[0]) + '\t' + row[1] + '\t' + row[2] + '\t' + convert_minutes_to_hours_and_minutes(row[3]))
+    # Print data as a table with lables id, catagory, start_time, duration using pandas
+    df = pd.DataFrame(result, columns=['id', 'catagory', 'start_time', 'duration'])
+    df['duration'] = df['duration'].apply(convert_seconds_to_hours_and_minutes)
+    print(df)
 
-def convert_minutes_to_hours_and_minutes(minutes):
-    hours = int(minutes / 60)
-    minutes = int(minutes % 60)
-    return str(hours) + ' hours ' + str(minutes) + ' minutes'
+def convert_seconds_to_hours_and_minutes(minutes):
+    hours = minutes // 3600
+    minutes = (minutes % 3600) // 60
+    return str(int(hours)) + 'h ' + str(int(minutes)) + 'm'
 
 def get_unique_catorgories_from_last_10_days_in_time_entries():
     c.execute("SELECT DISTINCT catagory FROM time_entry WHERE date BETWEEN date('now', '-10 day') AND date('now')")
@@ -112,7 +113,7 @@ def get_user_selection_of_catagory():
 def menu():
     print('1. New time entry')
     print('2. Clock out')
-    print('3. View time entries')
+    print('3. Print entries')
     print('4. Delete a time entry')
     print('5. Exit')
     try:
