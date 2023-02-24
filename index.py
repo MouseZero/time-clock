@@ -190,6 +190,7 @@ def edit_time_of_entry(id, start_time, end_time):
         return
     elif option == 2:
         # edit end time
+        change_end_time_of_entry(id, start_time, end_time)
         pass
     elif option == 3:
         return
@@ -218,6 +219,28 @@ def change_start_time_of_entry(id, start_time, end_time):
         c.execute("UPDATE time_entry SET end_time=? WHERE id=?", (newStartTime, result[0][0]))
         conn.commit()
         write_new_duration(result[0][0], result[0][2], newStartTime)
+
+def change_end_time_of_entry(id, start_time, end_time):
+    newEndTime = get_time_from_input()
+
+    # Fix the selected record
+    write_new_duration(id, start_time, newEndTime)
+    c.execute("UPDATE time_entry SET end_time=? WHERE id=?", (newEndTime, id))
+    conn.commit()
+
+    # Fix the related record
+    # Find any time_entry that was created today and has the start_time that matches end_time variable then change the start_time to the newEndTime
+    c.execute("SELECT id, catagory, start_time, end_time FROM time_entry WHERE date=? AND start_time=?", (datetime.now().strftime('%Y-%m-%d'), end_time))
+    result = c.fetchall()
+    if result is None:
+        return
+    print('also modifying the following record')
+    df = pd.DataFrame(result, columns=['id', 'catagory', 'start_time', 'end_time'])
+    print(df)
+    if len(result) > 0:
+        c.execute("UPDATE time_entry SET start_time=? WHERE id=?", (newEndTime, result[0][0]))
+        conn.commit()
+        write_new_duration(result[0][0], newEndTime, result[0][3])
         
 
 def get_time_from_input():
