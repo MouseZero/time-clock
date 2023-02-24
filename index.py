@@ -200,10 +200,25 @@ def edit_time_of_entry(id, start_time, end_time):
 def change_start_time_of_entry(id, start_time, end_time):
     newStartTime = get_time_from_input()
 
+    # Fix the selected record
     write_new_duration(id, newStartTime, end_time)
-
     c.execute("UPDATE time_entry SET start_time=? WHERE id=?", (newStartTime, id))
     conn.commit()
+
+    # Fix the related record
+    # Find any time_entry that was created today and has the end_time that matches start_time variable then change the end_time to the newStartTime
+    c.execute("SELECT id, catagory, start_time, end_time FROM time_entry WHERE date=? AND end_time=?", (datetime.now().strftime('%Y-%m-%d'), start_time))
+    result = c.fetchall()
+    if result is None:
+        return
+    print('also modifying the following record')
+    df = pd.DataFrame(result, columns=['id', 'catagory', 'start_time', 'end_time'])
+    print(df)
+    if len(result) > 0:
+        c.execute("UPDATE time_entry SET end_time=? WHERE id=?", (newStartTime, result[0][0]))
+        conn.commit()
+        write_new_duration(result[0][0], result[0][2], newStartTime)
+        
 
 def get_time_from_input():
     # get time from user input
