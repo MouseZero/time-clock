@@ -49,11 +49,15 @@ def close_last_time_entry():
     start_time = result[2]
     # get the current time
     end_time = datetime.now().strftime('%H:%M:%S')
+    write_new_duration(result[0], start_time, end_time)
+
+def write_new_duration(id, start_time, end_time):
     # get the duration in seconds
     duration = datetime.strptime(end_time, '%H:%M:%S') - datetime.strptime(start_time, '%H:%M:%S')
     # update the time entry
-    c.execute("UPDATE time_entry SET end_time=?, duration=? WHERE id=?", (end_time, duration.total_seconds(), result[0]))
+    c.execute("UPDATE time_entry SET end_time=?, duration=? WHERE id=?", (end_time, duration.total_seconds(), id))
     conn.commit()
+
 
 # function name delete_time_entry that deletes a time entry by id
 def delete_time_entry():
@@ -159,12 +163,12 @@ def view_edit_time_entry():
     print(df)
     try:
         option = int(input('Enter an option: '))
-        edit_time_of_entry(result[option][3]);
+        edit_time_of_entry(result[option][3], result[option][1], result[option][2]);
     except ValueError:
         print('An error occured, please enter a number 1-' + str(len(result)))
         return
 
-def edit_time_of_entry(id):
+def edit_time_of_entry(id, start_time, end_time):
     # Display the time entry with id and ask the user if they want to change the "start_time" or "end_time" then take there input and update the database
     c.execute("SELECT id, catagory, start_time, end_time FROM time_entry WHERE id=?", (id,))
     result = c.fetchall()
@@ -182,7 +186,7 @@ def edit_time_of_entry(id):
         return
     if option == 1:
         # edit start time
-        change_start_time_of_entry(id)
+        change_start_time_of_entry(id, start_time, end_time)
         return
     elif option == 2:
         # edit end time
@@ -193,8 +197,11 @@ def edit_time_of_entry(id):
         print('An error occured, please enter a number 1-3')
         return
 
-def change_start_time_of_entry(id):
+def change_start_time_of_entry(id, start_time, end_time):
     newStartTime = get_time_from_input()
+
+    write_new_duration(id, newStartTime, end_time)
+
     c.execute("UPDATE time_entry SET start_time=? WHERE id=?", (newStartTime, id))
     conn.commit()
 
@@ -203,11 +210,10 @@ def get_time_from_input():
     try:
         time = input('Enter a time in the format HH:MM: ')
         time = datetime.strptime(time, '%H:%M').time()
-        time = time.strftime('%H:%M')
     except ValueError:
         print('An error occured, please enter a time in the format HH:MM: ')
         return get_time_from_input()
-    return time + ":00"
+    return time.strftime('%H:%M:%S')
 
 def menu():
     print('1. New time entry')
