@@ -291,4 +291,5 @@ def menu():
 setupDB()
 while(True):
     menu()
+    print('\n')
 conn.close()
